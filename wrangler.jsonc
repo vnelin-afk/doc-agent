@@ -10,6 +10,14 @@
 	"observability": {
 		"enabled": true
 	},
+	"vars": {
+		"NOTION_DB_ID": "2ae8181285cd80989102e392caa67fcb",
+		"TEMPLATES_FOLDER_ID": "1iNnYhfl9HnZHIXDCBf7t05zQ1hBWPTHE",
+		"RESULTS_FOLDER_ID": "1G5DbiCGHoFCCCnuny0qrWliyYVN1F_lR"
+	},
+	"assets": {
+		"directory": "./public"
+	},
 	"compatibility_flags": [
 		"nodejs_compat"
 	]

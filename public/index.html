@@ -1,0 +1,1148 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FinServ · Document Agent</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --sidebar-bg: #0f2744;
+      --sidebar-hover: #162f4a;
+      --sidebar-active: #1a3a5c;
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --success: #059669;
+      --error: #dc2626;
+      --main-bg: #f0f7ff;
+      --card-bg: #ffffff;
+      --border: #bfdbfe;
+      --block-header: #1e40af;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --text-muted: #94a3b8;
+      --auto-bg: #d1fae5;
+      --auto-text: #065f46;
+      --radius: 10px;
+      --shadow: 0 1px 3px rgba(30,64,175,.08), 0 1px 2px rgba(30,64,175,.05);
+      --shadow-md: 0 4px 12px rgba(30,64,175,.12), 0 2px 6px rgba(30,64,175,.07);
+    }
+
+    html, body { height: 100%; }
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: var(--main-bg);
+      color: var(--text-primary);
+    }
+
+    /* ===== LOGO ===== */
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      user-select: none;
+    }
+    .logo-icon {
+      width: 30px; height: 30px;
+      border-radius: 7px;
+      background: linear-gradient(135deg, #2563eb 0%, #059669 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      font-size: 15px;
+      color: #fff;
+      letter-spacing: -1px;
+      flex-shrink: 0;
+    }
+    .logo-text {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+    .logo-text.dark  { color: #1e40af; }
+    .logo-text.light { color: #fff; }
+
+    /* ===== START SCREEN ===== */
+    #start-screen {
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 52px;
+      padding: 24px;
+      background: var(--main-bg);
+      overflow-y: auto;
+    }
+
+    .start-header { text-align: center; }
+    .start-header .logo { justify-content: center; margin-bottom: 16px; }
+    .start-header p {
+      color: var(--text-secondary);
+      font-size: 15px;
+      margin-top: 6px;
+    }
+
+    .doc-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 200px);
+      gap: 16px;
+    }
+
+    .doc-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 26px 20px;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s;
+      position: relative;
+      user-select: none;
+    }
+    .doc-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); }
+    .doc-card.disabled { cursor: default; opacity: 0.55; }
+    .doc-card.disabled:hover { transform: none; box-shadow: none; }
+    .doc-card .icon { font-size: 34px; margin-bottom: 14px; }
+    .doc-card .card-title { font-size: 15px; font-weight: 600; color: var(--text-primary); }
+    .doc-card .card-sub { font-size: 12px; color: var(--text-secondary); margin-top: 5px; }
+    .soon-badge {
+      position: absolute;
+      top: 10px; right: 10px;
+      background: #f1f5f9;
+      color: var(--text-muted);
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 20px;
+    }
+
+    /* ===== TIMESHEET SCREEN ===== */
+    #timesheet-screen {
+      display: none;
+      flex-direction: row;
+      min-height: 100vh;
+      align-items: flex-start;
+    }
+    #timesheet-screen.active { display: flex; }
+
+    /* === SIDEBAR === */
+    .sidebar {
+      width: 280px;
+      min-width: 280px;
+      max-width: 280px;
+      height: 100vh;
+      position: sticky;
+      top: 0;
+      background: var(--sidebar-bg);
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      overflow-x: hidden;
+      flex-shrink: 0;
+    }
+
+    .sidebar-top {
+      padding: 18px 16px 14px;
+      border-bottom: 1px solid rgba(255,255,255,.07);
+    }
+    .back-btn {
+      background: none;
+      border: none;
+      color: rgba(255,255,255,.45);
+      font-size: 12px;
+      cursor: pointer;
+      padding: 3px 0;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      transition: color 0.15s;
+      font-family: inherit;
+      margin-bottom: 16px;
+    }
+    .back-btn:hover { color: #fff; }
+
+    .sidebar-section-label {
+      font-size: 10px;
+      font-weight: 700;
+      color: rgba(255,255,255,.3);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      padding: 12px 16px 4px;
+    }
+
+    .client-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 4px 8px;
+    }
+    .client-list::-webkit-scrollbar { width: 3px; }
+    .client-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,.12); border-radius: 2px; }
+
+    .client-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0 10px;
+      height: 40px;
+      cursor: pointer;
+      transition: background 0.12s;
+      border-radius: 8px;
+      margin-bottom: 2px;
+    }
+    .client-item:hover { background: var(--sidebar-hover); }
+    .client-item.active { background: var(--sidebar-active); }
+    .client-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: rgba(255,255,255,.2);
+      flex-shrink: 0;
+    }
+    .client-dot.done     { background: #34d399; }
+    .client-dot.running  { background: #fbbf24; }
+    .client-dot.error    { background: #f87171; }
+    .client-name {
+      font-size: 13px;
+      color: rgba(255,255,255,.78);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 180px;
+    }
+
+    .sidebar-footer {
+      padding: 10px 8px 14px;
+      border-top: 1px solid rgba(255,255,255,.07);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .add-client-btn {
+      background: none;
+      border: 1px dashed rgba(255,255,255,.18);
+      color: rgba(255,255,255,.55);
+      font-size: 13px;
+      padding: 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.15s;
+      font-family: inherit;
+    }
+    .add-client-btn:hover { border-color: rgba(255,255,255,.38); color: #fff; }
+
+    .gen-all-btn {
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.08);
+      color: rgba(255,255,255,.25);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      padding: 10px;
+      border-radius: 8px;
+      cursor: default;
+      text-align: center;
+    }
+
+    /* === MAIN PANEL === */
+    .main-panel {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      background: var(--main-bg);
+    }
+
+    .main-header {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      padding: 18px 28px 16px;
+      border-bottom: 1px solid var(--border);
+      background: var(--card-bg);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .main-header h2 {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    .breadcrumb {
+      font-size: 12px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .breadcrumb span { color: var(--text-secondary); }
+
+    .main-body {
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* empty state */
+    .empty-state {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      color: var(--text-muted);
+      padding-top: 60px;
+    }
+    .empty-state .es-icon { font-size: 52px; }
+    .empty-state p { font-size: 14px; }
+    .empty-state button {
+      margin-top: 8px;
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 20px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background 0.15s;
+    }
+    .empty-state button:hover { background: var(--primary-hover); }
+
+    /* === BLOCKS === */
+    .block {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      width: 100%;
+    }
+    .block-header {
+      padding: 12px 18px;
+      background: #eff6ff;
+      border-bottom: 1px solid var(--border);
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--block-header);
+      letter-spacing: 0.4px;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+    .block-body { padding: 16px; }
+
+    /* === DROPZONE === */
+    .dropzone {
+      border: 2px dashed var(--border);
+      border-radius: 8px;
+      min-height: 100px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.15s;
+      cursor: pointer;
+      padding: 16px;
+    }
+    .dropzone:hover, .dropzone.drag-over {
+      border-color: var(--primary);
+      background: #eff6ff;
+    }
+    .dropzone .dz-icon { font-size: 20px; line-height: 1; }
+    .dropzone .dz-text { font-size: 13px; color: var(--text-secondary); }
+    .dropzone input[type=file] { display: none; }
+
+    .file-list { margin-top: 10px; display: flex; flex-direction: column; gap: 4px; }
+    .file-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 10px;
+      background: #f8faff;
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      font-size: 12px;
+      height: 38px;
+    }
+    .file-icon { font-size: 14px; flex-shrink: 0; }
+    .file-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-primary); }
+    .file-size { color: var(--text-muted); flex-shrink: 0; font-size: 11px; }
+    .file-remove {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 18px;
+      padding: 0 2px;
+      line-height: 1;
+      transition: color 0.12s;
+    }
+    .file-remove:hover { color: var(--error); }
+
+    .parse-status {
+      margin-top: 12px;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      flex-wrap: wrap;
+    }
+    .parse-status.parsing { color: #d97706; }
+    .parse-status.ok { color: var(--success); }
+    .parse-status.error { color: var(--error); }
+
+    /* === FORM FIELDS === */
+    .field-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .field-group { display: flex; flex-direction: column; gap: 5px; }
+    .field-group.full { grid-column: 1 / -1; }
+    .field-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-secondary);
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .auto-badge {
+      background: var(--auto-bg);
+      color: var(--auto-text);
+      font-size: 9px;
+      font-weight: 700;
+      padding: 1px 6px;
+      border-radius: 10px;
+      letter-spacing: 0.2px;
+    }
+    .field-input {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: 6px 10px;
+      height: 36px;
+      font-size: 13px;
+      color: var(--text-primary);
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      font-family: inherit;
+      background: #fff;
+      min-width: 0;
+    }
+    .field-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,.1); }
+    .field-input.auto-filled { border-color: #6ee7b7; }
+    .field-input.manual-edit { border-color: var(--primary); }
+
+    /* === PERIOD PARAMS === */
+    .period-grid {
+      display: grid;
+      grid-template-columns: 3fr 2fr;
+      gap: 12px;
+    }
+    select.field-input { appearance: none; cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2364748b' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; padding-right: 28px; height: 36px; }
+
+    .computed-fields {
+      margin-top: 12px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+    .computed-field {
+      background: #f0f7ff;
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: 7px 10px;
+    }
+    .computed-label { font-size: 10px; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; }
+    .computed-value { font-size: 12px; color: var(--text-primary); margin-top: 4px; font-weight: 600; }
+
+    /* === ACTION BAR === */
+    .action-bar {
+      position: sticky;
+      bottom: 0;
+      z-index: 10;
+      padding: 16px 24px;
+      background: var(--card-bg);
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+    }
+    .gen-btn {
+      width: 100%;
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 13px 26px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: background 0.15s, box-shadow 0.15s;
+      font-family: inherit;
+    }
+    .gen-btn:hover { background: var(--primary-hover); box-shadow: 0 4px 12px rgba(37,99,235,.3); }
+    .gen-btn:disabled { background: #93c5fd; cursor: default; box-shadow: none; }
+
+    .spinner {
+      width: 16px; height: 16px;
+      border: 2px solid rgba(255,255,255,.35);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.65s linear infinite;
+      flex-shrink: 0;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* === RESULT CARD === */
+    .result-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px 18px;
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      box-shadow: var(--shadow);
+    }
+    .result-card.success { border-color: #6ee7b7; background: #f0fdf9; }
+    .result-card.error-card { border-color: #fca5a5; background: #fff5f5; }
+    .result-icon { font-size: 30px; flex-shrink: 0; }
+    .result-body { flex: 1; }
+    .result-title { font-size: 14px; font-weight: 700; color: var(--text-primary); }
+    .result-sub { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
+    .result-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 12px;
+      background: var(--primary);
+      color: #fff;
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 8px 16px;
+      border-radius: 7px;
+      transition: background 0.15s;
+    }
+    .result-link:hover { background: var(--primary-hover); }
+    .legal-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: var(--auto-bg);
+      color: var(--auto-text);
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 9px;
+      border-radius: 20px;
+      margin-top: 8px;
+    }
+    .retry-btn {
+      margin-top: 10px;
+      background: none;
+      border: 1px solid var(--error);
+      color: var(--error);
+      font-size: 12px;
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.15s;
+    }
+    .retry-btn:hover { background: var(--error); color: #fff; }
+
+    /* === EMPLOYEES PREVIEW === */
+    .emp-list { margin-top: 12px; display: flex; flex-direction: column; gap: 6px; }
+    .emp-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 7px 12px;
+      background: #f8faff;
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      font-size: 12px;
+      flex-wrap: wrap;
+    }
+    .emp-name { font-weight: 500; color: var(--text-primary); }
+    .emp-pos { color: var(--text-secondary); }
+    .emp-badge {
+      padding: 1px 7px;
+      border-radius: 10px;
+      font-size: 10px;
+      font-weight: 700;
+      background: #dbeafe;
+      color: #1e40af;
+      margin-left: auto;
+    }
+    .emp-badge.part { background: #fef3c7; color: #92400e; }
+
+    /* === COMMENTS BLOCK === */
+    .comments-textarea {
+      width: 100%;
+      resize: vertical;
+      min-height: 80px;
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: 10px 12px;
+      font-size: 13px;
+      font-family: inherit;
+      color: var(--text-primary);
+      background: #f1f5f9;
+      cursor: not-allowed;
+      opacity: 0.6;
+      outline: none;
+    }
+    .comments-hint {
+      margin-top: 8px;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    /* === RESPONSIVE === */
+    @media (max-width: 900px) {
+      .doc-grid { grid-template-columns: repeat(2, 180px); }
+      .computed-fields { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 600px) {
+      .sidebar { width: 240px; min-width: 240px; }
+      .doc-grid { grid-template-columns: repeat(2, 1fr); max-width: 380px; }
+      .field-grid { grid-template-columns: 1fr; }
+      .field-group.full { grid-column: auto; }
+      .main-body { padding: 16px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ===== START SCREEN ===== -->
+<div id="start-screen">
+  <div class="start-header">
+    <div class="logo">
+      <div class="logo-icon">F</div>
+      <span class="logo-text dark">FinServ</span>
+    </div>
+    <p>Генерація документів для бізнесу</p>
+  </div>
+
+  <div class="doc-grid">
+    <div class="doc-card" onclick="openTimesheet()">
+      <div class="icon">📋</div>
+      <div class="card-title">Табель П-5</div>
+      <div class="card-sub">Облік робочого часу</div>
+    </div>
+    <div class="doc-card disabled">
+      <span class="soon-badge">Незабаром</span>
+      <div class="icon">📄</div>
+      <div class="card-title">Договір</div>
+      <div class="card-sub">Типові угоди</div>
+    </div>
+    <div class="doc-card disabled">
+      <span class="soon-badge">Незабаром</span>
+      <div class="icon">✅</div>
+      <div class="card-title">Акт</div>
+      <div class="card-sub">Акт виконаних робіт</div>
+    </div>
+    <div class="doc-card disabled">
+      <span class="soon-badge">Незабаром</span>
+      <div class="icon">🧾</div>
+      <div class="card-title">Рахунок</div>
+      <div class="card-sub">Рахунок-фактура</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== TIMESHEET SCREEN ===== -->
+<div id="timesheet-screen">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-top">
+      <button class="back-btn" onclick="goBack()">← Головна</button>
+      <div class="logo">
+        <div class="logo-icon">F</div>
+        <span class="logo-text light">FinServ</span>
+      </div>
+    </div>
+
+    <div class="sidebar-section-label">Компанії</div>
+    <div class="client-list" id="client-list"></div>
+
+    <div class="sidebar-footer">
+      <button class="add-client-btn" onclick="addClient()">+ Додати компанію</button>
+      <div class="gen-all-btn" title="Незабаром">⚡ ГЕНЕРУВАТИ ВСЕ</div>
+    </div>
+  </div>
+
+  <!-- MAIN PANEL -->
+  <div class="main-panel">
+    <div class="main-header">
+      <h2 id="main-title">Табель П-5</h2>
+      <div class="breadcrumb">Табель П-5 <span>›</span> <span id="breadcrumb-client">—</span></div>
+    </div>
+    <div class="main-body" id="main-body">
+      <div class="empty-state">
+        <div class="es-icon">🏢</div>
+        <p>Оберіть або додайте компанію</p>
+        <button onclick="addClient()">+ Додати компанію</button>
+      </div>
+    </div>
+    <div class="action-bar" id="action-bar" style="display:none">
+      <button class="gen-btn" id="gen-btn" onclick="generate()">
+        <span id="gen-btn-text">Генерувати табель →</span>
+      </button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ===== STATE =====
+const state = {
+  screen: 'start',
+  clients: [],
+  activeClientId: null,
+};
+
+function newClient() {
+  return {
+    id: crypto.randomUUID(),
+    name: 'Нова компанія',
+    files: [],
+    parsedEmployees: [],
+    org: { org_name: '', edrpou: '', director_name: '', responsible_person: '' },
+    autoFields: [],
+    month: new Date().getMonth() + 1,
+    year: new Date().getFullYear(),
+    result: null,
+    errorMsg: null,
+    status: 'idle',
+  };
+}
+
+function getClient(id)  { return state.clients.find(c => c.id === id); }
+function getActive()    { return getClient(state.activeClientId); }
+
+// ===== NAVIGATION =====
+function openTimesheet() {
+  state.screen = 'timesheet';
+  if (state.clients.length === 0) addClient();
+  else render();
+}
+
+function goBack() {
+  state.screen = 'start';
+  render();
+}
+
+function render() {
+  const startEl = document.getElementById('start-screen');
+  const tsEl    = document.getElementById('timesheet-screen');
+  console.log('screen:', state.screen, 'clients:', state.clients.length);
+  if (state.screen === 'start') {
+    startEl.style.display = 'flex';
+    tsEl.style.display    = 'none';
+  } else {
+    startEl.style.display = 'none';
+    tsEl.style.display    = 'flex';
+    renderAll();
+  }
+}
+
+// ===== CLIENT ACTIONS =====
+function addClient() {
+  const c = newClient();
+  state.clients.push(c);
+  state.activeClientId = c.id;
+  console.log('screen:', state.screen, 'clients:', state.clients.length);
+  render();
+}
+
+function selectClient(id) {
+  state.activeClientId = id;
+  renderAll();
+}
+
+// ===== RENDER =====
+function renderAll() {
+  renderSidebar();
+  renderMain();
+}
+
+const MONTHS_UK = ['Січень','Лютий','Березень','Квітень','Травень','Червень','Липень','Серпень','Вересень','Жовтень','Листопад','Грудень'];
+
+function renderSidebar() {
+  const list = document.getElementById('client-list');
+  list.innerHTML = state.clients.map(c => {
+    const dotClass = c.status === 'done' ? 'done' : (c.status === 'generating' || c.status === 'parsing') ? 'running' : c.status === 'error' ? 'error' : '';
+    const active = c.id === state.activeClientId ? 'active' : '';
+    return `<div class="client-item ${active}" onclick="selectClient('${c.id}')">
+      <div class="client-dot ${dotClass}"></div>
+      <span class="client-name">${esc(c.name)}</span>
+    </div>`;
+  }).join('');
+}
+
+function renderMain() {
+  const body = document.getElementById('main-body');
+  const actionBar = document.getElementById('action-bar');
+  const c = getActive();
+
+  if (!c) {
+    body.innerHTML = `<div class="empty-state">
+      <div class="es-icon">🏢</div>
+      <p>Оберіть або додайте компанію</p>
+      <button onclick="addClient()">+ Додати компанію</button>
+    </div>`;
+    actionBar.style.display = 'none';
+    document.getElementById('breadcrumb-client').textContent = '—';
+    return;
+  }
+
+  document.getElementById('main-title').textContent = c.name || 'Нова компанія';
+  document.getElementById('breadcrumb-client').textContent = c.name || 'Нова компанія';
+  actionBar.style.display = 'flex';
+  updateGenBtn(c);
+
+  body.innerHTML = buildFilesBlock(c) + buildOrgBlock(c) + buildPeriodBlock(c) + buildCommentsBlock() + buildResultBlock(c);
+  bindFileDrop(c.id);
+  bindOrgFields(c.id);
+  bindPeriodFields(c.id);
+}
+
+function updateGenBtn(c) {
+  const btn = document.getElementById('gen-btn');
+  if (c.status === 'generating') {
+    btn.disabled = true;
+    btn.innerHTML = `<div class="spinner"></div><span>Генеруємо табель...</span>`;
+  } else {
+    btn.disabled = false;
+    btn.innerHTML = `<span id="gen-btn-text">Генерувати табель →</span>`;
+  }
+}
+
+// ===== BLOCK: FILES =====
+function buildFilesBlock(c) {
+  const fileItems = c.files.map((f, i) => {
+    const kb = f.size ? ` · ${(f.size / 1024).toFixed(0)} KB` : '';
+    return `<div class="file-item">
+      <span class="file-icon">${f.name.toLowerCase().endsWith('.pdf') ? '📕' : '📄'}</span>
+      <span class="file-name">${esc(f.name)}</span>
+      <span class="file-size">${esc(kb)}</span>
+      <button class="file-remove" onclick="removeFile('${c.id}', ${i})">×</button>
+    </div>`;
+  }).join('');
+
+  let parseStatus = '';
+  if (c.status === 'parsing') {
+    parseStatus = `<div class="parse-status parsing">
+      <div class="spinner" style="border-color:rgba(217,119,6,.25);border-top-color:#d97706;width:13px;height:13px;border-width:2px"></div>
+      Розпізнаємо накази...
+    </div>`;
+  } else if (c.parsedEmployees.length > 0) {
+    const ok = c.parsedEmployees.filter(e => !e.error);
+    const empItems = ok.map(e =>
+      `<div class="emp-item">
+        <span class="emp-name">${esc(e.full_name || '')}</span>
+        <span class="emp-pos">${esc(e.position || '')}</span>
+        <span class="emp-badge ${e.employment_type === 'part' ? 'part' : ''}">${e.employment_type === 'part' ? 'Сумісник' : 'Основний'}</span>
+      </div>`
+    ).join('');
+    parseStatus = `<div class="parse-status ok">✅ Розпізнано ${ok.length} працівник${ending(ok.length)}</div>
+    <div class="emp-list">${empItems}</div>`;
+  }
+
+  return `<div class="block">
+    <div class="block-header">📁 Файли наказів</div>
+    <div class="block-body">
+      <div class="dropzone" id="dz-${c.id}" onclick="document.getElementById('fi-${c.id}').click()">
+        <input type="file" id="fi-${c.id}" multiple accept=".pdf,.docx" onchange="handleFileInput(event,'${c.id}')">
+        <span class="dz-icon">📎</span>
+        <span class="dz-text">Перетягніть .docx / .pdf або клікніть для вибору</span>
+      </div>
+      ${c.files.length ? `<div class="file-list">${fileItems}</div>` : ''}
+      ${parseStatus}
+    </div>
+  </div>`;
+}
+
+function ending(n) {
+  if (n % 10 === 1 && n % 100 !== 11) return '';
+  if (n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20)) return 'и';
+  return 'ів';
+}
+
+// ===== BLOCK: ORG =====
+function buildOrgBlock(c) {
+  function field(key, label, full = false) {
+    const isAuto = c.autoFields.includes(key);
+    const inputCls = isAuto ? 'auto-filled' : '';
+    const badge = isAuto ? `<span class="auto-badge">авто</span>` : '';
+    const fullCls = full ? 'full' : '';
+    return `<div class="field-group ${fullCls}">
+      <label class="field-label">${label}${badge}</label>
+      <input class="field-input ${inputCls}" data-field="${key}" data-client="${c.id}"
+        value="${esc(c.org[key] || '')}" placeholder="${label}">
+    </div>`;
+  }
+  return `<div class="block">
+    <div class="block-header">🏢 Профіль компанії</div>
+    <div class="block-body">
+      <div class="field-grid">
+        ${field('org_name', 'Назва організації', true)}
+        ${field('edrpou', 'ЄДРПОУ')}
+        ${field('director_name', 'Директор')}
+        ${field('responsible_person', 'Відповідальна особа', true)}
+      </div>
+    </div>
+  </div>`;
+}
+
+// ===== BLOCK: PERIOD =====
+function buildPeriodBlock(c) {
+  const monthOptions = MONTHS_UK.map((m, i) =>
+    `<option value="${i+1}" ${c.month === i+1 ? 'selected' : ''}>${m}</option>`
+  ).join('');
+  const currYear = new Date().getFullYear();
+  const yearOptions = [currYear-1, currYear, currYear+1].map(y =>
+    `<option value="${y}" ${c.year === y ? 'selected' : ''}>${y}</option>`
+  ).join('');
+  const { period_from, period_to, fill_date, sign_date } = computePeriod(c.year, c.month);
+
+  return `<div class="block">
+    <div class="block-header">📅 Параметри табелю</div>
+    <div class="block-body">
+      <div class="period-grid">
+        <div class="field-group">
+          <label class="field-label">Місяць</label>
+          <select class="field-input" data-period="month" data-client="${c.id}">${monthOptions}</select>
+        </div>
+        <div class="field-group">
+          <label class="field-label">Рік</label>
+          <select class="field-input" data-period="year" data-client="${c.id}">${yearOptions}</select>
+        </div>
+      </div>
+      <div class="computed-fields">
+        <div class="computed-field"><div class="computed-label">Період від</div><div class="computed-value">${period_from}</div></div>
+        <div class="computed-field"><div class="computed-label">Період до</div><div class="computed-value">${period_to}</div></div>
+        <div class="computed-field"><div class="computed-label">Дата заповнення</div><div class="computed-value">${fill_date}</div></div>
+        <div class="computed-field"><div class="computed-label">Дата підпису</div><div class="computed-value">${sign_date}</div></div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function computePeriod(year, month) {
+  const pad = n => String(n).padStart(2, '0');
+  const lastDay = new Date(year, month, 0).getDate();
+  const period_from = `${pad(1)}.${pad(month)}.${year}`;
+  const period_to   = `${pad(lastDay)}.${pad(month)}.${year}`;
+  const today = new Date();
+  const fill_date = `${pad(today.getDate())}.${pad(today.getMonth()+1)}.${today.getFullYear()}`;
+  return { period_from, period_to, fill_date, sign_date: fill_date };
+}
+
+// ===== BLOCK: RESULT =====
+function buildCommentsBlock() {
+  return `<div class="block">
+    <div class="block-header">💬 Коментарі та примітки</div>
+    <div class="block-body">
+      <textarea class="comments-textarea" disabled rows="4"
+        placeholder="Додайте коментарі або примітки до табелю..."></textarea>
+      <p class="comments-hint">Функція в розробці — коментарі буде враховано в майбутніх версіях</p>
+    </div>
+  </div>`;
+}
+
+function buildResultBlock(c) {
+  if (c.status === 'error' && !c.result) {
+    return `<div class="result-card error-card">
+      <div class="result-icon">❌</div>
+      <div class="result-body">
+        <div class="result-title">Помилка генерації</div>
+        <div class="result-sub">${esc(c.errorMsg || 'Невідома помилка')}</div>
+        <button class="retry-btn" onclick="generate()">Спробувати знову</button>
+      </div>
+    </div>`;
+  }
+  if (c.result) {
+    return `<div class="result-card success">
+      <div class="result-icon">✅</div>
+      <div class="result-body">
+        <div class="result-title">Табель сформовано</div>
+        <div class="result-sub">${esc(c.result.docName || 'Документ готовий')}</div>
+        <div class="legal-badge">✓ OK</div><br>
+        <a class="result-link" href="${esc(c.result.link || '#')}" target="_blank">Відкрити документ →</a>
+      </div>
+    </div>`;
+  }
+  return '';
+}
+
+// ===== BIND: FILE DROP =====
+function bindFileDrop(clientId) {
+  const dz = document.getElementById(`dz-${clientId}`);
+  if (!dz) return;
+  dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag-over'); });
+  dz.addEventListener('dragleave', () => dz.classList.remove('drag-over'));
+  dz.addEventListener('drop', e => {
+    e.preventDefault();
+    dz.classList.remove('drag-over');
+    const files = [...e.dataTransfer.files].filter(f => /\.(pdf|docx)$/i.test(f.name));
+    if (files.length) addFiles(clientId, files);
+  });
+}
+
+function handleFileInput(e, clientId) {
+  const files = [...e.target.files];
+  if (files.length) addFiles(clientId, files);
+  e.target.value = '';
+}
+
+function removeFile(clientId, idx) {
+  const c = getClient(clientId);
+  if (!c) return;
+  c.files.splice(idx, 1);
+  if (c.files.length === 0) { c.parsedEmployees = []; c.autoFields = []; c.status = 'idle'; }
+  renderAll();
+}
+
+function addFiles(clientId, newFiles) {
+  const c = getClient(clientId);
+  if (!c) return;
+  c.files.push(...newFiles);
+  renderAll();
+  parsePack(clientId);
+}
+
+// ===== PARSE PACK =====
+async function parsePack(clientId) {
+  const c = getClient(clientId);
+  if (!c || c.files.length === 0) return;
+  c.status = 'parsing';
+  renderAll();
+
+  try {
+    const fd = new FormData();
+    c.files.forEach(f => fd.append('files', f));
+    const res = await fetch('/docs/parse-pack', { method: 'POST', body: fd });
+    const data = await res.json();
+
+    c.parsedEmployees = data.employees || [];
+    c.status = 'idle';
+
+    if (data.org) {
+      ['org_name', 'edrpou', 'director_name'].forEach(k => {
+        if (data.org[k] && !c.org[k]) {
+          c.org[k] = data.org[k];
+          if (!c.autoFields.includes(k)) c.autoFields.push(k);
+        }
+      });
+      if (data.org.org_name && c.name === 'Нова компанія') c.name = data.org.org_name;
+    }
+  } catch {
+    c.status = 'idle';
+  }
+
+  renderAll();
+}
+
+// ===== BIND: ORG FIELDS =====
+function bindOrgFields(clientId) {
+  document.querySelectorAll(`[data-field][data-client="${clientId}"]`).forEach(input => {
+    input.addEventListener('input', () => {
+      const c = getClient(clientId);
+      if (!c) return;
+      const key = input.dataset.field;
+      c.org[key] = input.value;
+      c.autoFields = c.autoFields.filter(f => f !== key);
+      input.classList.remove('auto-filled');
+      input.classList.add('manual-edit');
+      if (key === 'org_name') {
+        c.name = input.value || 'Нова компанія';
+        renderSidebar();
+        document.getElementById('main-title').textContent = c.name;
+        document.getElementById('breadcrumb-client').textContent = c.name;
+      }
+    });
+  });
+}
+
+// ===== BIND: PERIOD FIELDS =====
+function bindPeriodFields(clientId) {
+  document.querySelectorAll(`[data-period][data-client="${clientId}"]`).forEach(sel => {
+    sel.addEventListener('change', () => {
+      const c = getClient(clientId);
+      if (!c) return;
+      c[sel.dataset.period] = Number(sel.value);
+      renderMain();
+    });
+  });
+}
+
+// ===== GENERATE =====
+async function generate() {
+  const c = getActive();
+  if (!c) return;
+
+  c.status = 'generating';
+  c.result = null;
+  c.errorMsg = null;
+  renderAll();
+
+  try {
+    const { period_from, period_to, fill_date, sign_date } = computePeriod(c.year, c.month);
+    const fd = new FormData();
+    fd.append('year',        String(c.year));
+    fd.append('month',       String(c.month));
+    fd.append('fill_date',   fill_date);
+    fd.append('period_from', period_from);
+    fd.append('period_to',   period_to);
+    fd.append('sign_date',   sign_date);
+    if (c.org.org_name)    fd.append('org_name',    c.org.org_name);
+    if (c.org.edrpou)      fd.append('edrpou',      c.org.edrpou);
+    if (c.org.director_name) fd.append('director_name', c.org.director_name);
+    c.files.forEach(f => fd.append('files', f));
+
+    const res  = await fetch('/docs/timesheet-from-pack', { method: 'POST', body: fd });
+    const data = await res.json();
+
+    if (!res.ok || data.error) throw new Error(data.error || `Сервер: ${res.status}`);
+
+    c.result = data;
+    c.status  = 'done';
+  } catch (e) {
+    c.status   = 'error';
+    c.errorMsg = e.message;
+  }
+
+  renderAll();
+}
+
+// ===== UTIL =====
+function esc(s) {
+  return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ===== INIT =====
+render();
+</script>
+</body>
+</html>
