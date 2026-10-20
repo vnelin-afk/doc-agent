@@ -1,7 +1,6 @@
 import { getNotionClient, getDriveTemplates, generateDoc, handleChat, checkDoc, parseDocPack, getHistory } from './features/docs/index.js';
 import { generateTimesheet, previewTimesheet, timesheetFromPack, createTimesheetTemplate } from './features/timesheet/index.js';
 import { processPayslip } from './features/payslip/index.js';
-import { vacationParse, vacationGenerate } from './features/vacation/index.js';
 import { tckParse, tckReparse, handleTckGenerate } from './features/tck/index.js';
 import { osobovaParse, handleOsobovaGenerate, osobovaExcelDebug } from './features/osobova/index.js';
 import { viyskovyiOblikParse } from './features/viyskovyi-oblik/parser.js';
@@ -47,8 +46,10 @@ export default {
 			if (path === '/docs/payslip' && request.method === 'POST') return await processPayslip(request, env, cors);
 
 			// ── Vacation (Графік відпусток) ─────────────────────────────────
-			if (path === '/docs/vacation-parse' && request.method === 'POST') return await vacationParse(request, env, cors);
-			if (path === '/docs/vacation-generate' && request.method === 'POST') return await vacationGenerate(request, env, cors);
+			// Графік відпусток перенесено у FIN.SERV (docs-platform T004/T005).
+			if (path === '/docs/vacation-parse' || path === '/docs/vacation-generate') {
+				return json({ error: 'Графік відпусток перенесено у FIN.SERV: картка клієнта → Документи → Графік відпусток' }, cors, 410);
+			}
 
 			// ── TCK (Повідомлення в ТЦК) ────────────────────────────────────
 			if (path === '/docs/tck-parse' && request.method === 'POST') return await tckParse(request, env, cors);
