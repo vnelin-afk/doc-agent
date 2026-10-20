@@ -250,8 +250,8 @@ function generateAnnex4(spec) {
 		EMPLOYEE_RNOKPP: getVal(employee.rnokpp),
 		EMPLOYEE_DOB: getVal(employee.dob),
 		EMPLOYEE_ADDRESS: getVal(employee.address),
-		// FIX-9: дата документу (поле "Сформовано")
-		FORMATION_DATE: formatDateUA(getVal(military.doc_date)),
+		// FIX-9: дата уточнення даних (поле "Дата уточнення даних")
+		FORMATION_DATE: formatDateUA(getVal(military.issued_date)),
 		MIL_DOC_NUMBER: getVal(military.number),
 		MIL_DOC_DATE: formatDateUA(getVal(military.issued_date)),
 		VOS_NUMBER: getVal(military.vos),
